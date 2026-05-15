@@ -1,0 +1,227 @@
+﻿<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Real-Time Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Driver.js for Interactive Tour -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 min-h-screen text-slate-800 dark:text-slate-200 font-sans p-4 md:p-8 transition-colors duration-300">
+    
+    <!-- Header -->
+    <header class="mb-8 text-center relative max-w-6xl mx-auto">
+        <!-- Tour Button -->
+        <button id="start-tour-btn" class="absolute left-0 top-0 py-2 px-4 rounded-full bg-indigo-500 text-white hover:bg-indigo-600 transition shadow-lg flex items-center justify-center gap-2">
+            <i class="bi bi-signpost-split-fill text-lg"></i>
+            <span class="font-bold text-sm">Start Tour</span>
+        </button>
+
+        <button id="theme-toggle" class="absolute right-0 top-0 p-3 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition shadow-sm">
+            <i class="bi bi-moon-stars-fill dark:hidden text-lg"></i>
+            <i class="bi bi-sun-fill hidden dark:inline-block text-lg text-yellow-400"></i>
+        </button>
+
+        <h1 class="text-4xl font-extrabold text-slate-900 dark:text-white mb-2">Global Live Dashboard</h1>
+        <p id="greeting-text" class="text-slate-600 dark:text-slate-400 font-medium">Welcome! Tracking Markets & Weather</p>
+
+        <!-- World Clocks -->
+        <div class="mt-6 flex flex-wrap justify-center gap-3 sm:gap-6 text-sm font-bold">
+            <div class="bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">🗽 NY: <span id="clock-ny" class="text-indigo-500">--:--</span></div>
+            <div class="bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">💂 London: <span id="clock-lon" class="text-indigo-500">--:--</span></div>
+            <div class="bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">🏰 Lux: <span id="clock-lux" class="text-indigo-500">--:--</span></div>
+            <div class="bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">🗼 Tokyo: <span id="clock-tok" class="text-indigo-500">--:--</span></div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Interactive Currency Section -->
+        <section class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 border border-slate-100 dark:border-slate-700 transition-colors duration-300 relative">
+            <div class="flex items-center justify-between mb-8">
+                <h2 class="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                    <i class="bi bi-currency-exchange text-indigo-500"></i> Markets Calculator
+                </h2>
+                <div class="flex gap-3 items-center">
+                    <select id="target-currency-select" class="bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2 dark:text-white font-bold cursor-pointer">
+                        <option value="USD">USD ($)</option>
+                        <option value="TRY">TRY (₺)</option>
+                        <option value="GBP">GBP (£)</option>
+                        <option value="JPY">JPY (¥)</option>
+                        <option value="CHF">CHF (Fr)</option>
+                        <option value="BTC">₿ Bitcoin</option>
+                    </select>
+                    <span class="text-xs font-semibold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-400 py-1 px-3 rounded-full flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span> Live
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Dual Input Forms for Auto-Conversion -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 relative">
+                <!-- Connect Icon -->
+                <div class="hidden sm:flex absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 bg-white dark:bg-slate-800 p-2 rounded-full shadow-md text-slate-400">
+                    <i class="bi bi-arrow-left-right"></i>
+                </div>
+
+                <div class="value-card relative bg-slate-50 dark:bg-slate-700 p-6 border border-slate-200 dark:border-slate-600 rounded-xl text-center shadow-sm">
+                    <p class="text-sm text-slate-500 dark:text-slate-400 font-bold mb-2 uppercase tracking-wide">Euro (EUR)</p>
+                    <div id="skel-eur" class="h-10 bg-slate-200 dark:bg-slate-600 rounded animate-pulse w-24 mx-auto"></div>
+                    <div class="flex items-center justify-center hidden" id="eur-container">
+                        <span class="text-3xl font-bold text-slate-400 mr-1">€</span>
+                        <input type="number" id="eur-input" value="1" class="text-4xl font-black text-blue-600 dark:text-blue-400 bg-transparent w-full text-center focus:outline-none focus:ring-0 num-input border-b-2 border-transparent focus:border-blue-300 transition-colors">
+                    </div>
+                </div>
+                
+                <div class="value-card relative bg-slate-50 dark:bg-slate-700 p-6 border border-slate-200 dark:border-slate-600 rounded-xl text-center shadow-sm">
+                    <p class="text-sm text-slate-500 dark:text-slate-400 font-bold mb-2 uppercase tracking-wide" id="target-curr-label">Target (USD)</p>
+                    <div id="skel-usd" class="h-10 bg-slate-200 dark:bg-slate-600 rounded animate-pulse w-24 mx-auto"></div>
+                    <div class="flex items-center justify-center hidden" id="usd-container">
+                        <input type="number" id="target-input" value="--" class="text-4xl font-black text-emerald-600 dark:text-emerald-400 bg-transparent w-full text-center focus:outline-none focus:ring-0 num-input border-b-2 border-transparent focus:border-emerald-300 transition-colors">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Currency Chart -->
+            <div class="mt-6 h-48 relative">
+                <div id="skel-chart" class="absolute inset-0 bg-slate-100 dark:bg-slate-700 rounded-lg animate-pulse z-0"></div>
+                <canvas id="currencyChart" class="hidden relative z-10"></canvas>
+            </div>
+
+            <p id="currency-time" class="text-xs text-slate-400 dark:text-slate-500 mt-4 text-right font-medium">Last updated: --</p>
+        </section>
+
+        <!-- Dynamic Weather Section -->
+        <section class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 border border-slate-100 dark:border-slate-700 transition-colors duration-300 relative">
+            <div class="flex items-center justify-between mb-8 flex-col sm:flex-row gap-4">
+                <h2 class="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                    <i class="bi bi-globe-americas text-sky-500"></i> <span id="city-title">Luxembourg</span> Weather
+                </h2>
+                
+                <!-- City Search Bar and History -->
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <form id="city-search-form" class="relative flex-grow">
+                        <input type="text" id="city-search-input" placeholder="Search any city..." class="w-full pl-10 pr-4 py-2 rounded-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 transition-shadow">
+                        <i class="bi bi-search absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                    </form>
+                    <button id="view-history-btn" type="button" class="p-2 w-10 h-10 flex items-center justify-center rounded-full bg-indigo-100 dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-200 dark:hover:bg-slate-600 transition shadow-sm" title="Search History (SQL)">
+                        <i class="bi bi-database"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-8 mt-4">
+                <div id="skel-icon" class="w-20 h-20 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse"></div>
+                <div id="weather-icon-container" class="text-center hidden">
+                    <i id="weather-icon" class="bi bi-cloud text-sky-500 text-[6rem] drop-shadow-md"></i>
+                </div>
+
+                <div class="text-center sm:text-left sm:border-l-2 border-slate-100 dark:border-slate-700 sm:pl-8">
+                    <div id="skel-temp" class="h-12 bg-slate-200 dark:bg-slate-700 rounded animate-pulse mb-2 w-32"></div>
+                    <p id="weather-temp" class="value-card text-7xl font-black text-slate-800 dark:text-white tracking-tighter hidden">--°</p>
+                    
+                    <div id="skel-desc" class="h-5 bg-slate-200 dark:bg-slate-700 rounded animate-pulse w-24 mt-2"></div>
+                    <p id="weather-desc" class="text-xl text-slate-500 dark:text-slate-400 font-medium mt-2 hidden">Fetching...</p>
+                </div>
+            </div>
+            
+            <div class="mt-10 grid grid-cols-3 gap-4 text-center bg-slate-50 dark:bg-slate-700 rounded-xl p-4 border border-slate-100 dark:border-slate-600 shadow-sm transition-colors duration-300">
+                <div class="value-card">
+                    <p class="text-xs text-slate-400 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Feels Like</p>
+                    <div id="skel-feels" class="h-6 bg-slate-200 dark:bg-slate-600 rounded animate-pulse w-12 mx-auto"></div>
+                    <p id="weather-feels" class="font-bold text-slate-700 dark:text-slate-200 text-xl hidden">--°</p>
+                </div>
+                <div class="value-card">
+                    <p class="text-xs text-slate-400 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Wind</p>
+                    <div id="skel-wind" class="h-6 bg-slate-200 dark:bg-slate-600 rounded animate-pulse w-16 mx-auto"></div>
+                    <p id="weather-wind" class="font-bold text-slate-700 dark:text-slate-200 text-xl hidden">-- km/h</p>
+                </div>
+                <div class="value-card">
+                    <p class="text-xs text-slate-400 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Humidity</p>
+                    <div id="skel-humidity" class="h-6 bg-slate-200 dark:bg-slate-600 rounded animate-pulse w-12 mx-auto"></div>
+                    <p id="weather-humidity" class="font-bold text-slate-700 dark:text-slate-200 text-xl hidden">--%</p>
+                </div>
+            </div>
+            <p id="weather-time" class="text-xs text-slate-400 dark:text-slate-500 mt-6 text-right font-medium">Last updated: --</p>
+        </section>
+
+        <!-- AI Analyst Section -->
+        <section class="lg:col-span-2 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl shadow-xl p-8 border border-indigo-400 dark:border-indigo-700 text-white relative overflow-hidden transition-colors duration-300">
+            <div class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white opacity-10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="flex items-center justify-between mb-4 flex-col sm:flex-row gap-4">
+                <h2 class="text-2xl font-bold flex items-center gap-3">
+                    <i class="bi bi-robot text-yellow-300 animate-pulse"></i> AI Market & Weather Analyst
+                </h2>
+                <button id="ai-insight-btn" class="bg-white/20 hover:bg-white/30 transition-colors px-6 py-2 rounded-full text-sm font-bold flex items-center gap-2 shadow-sm">
+                    <i class="bi bi-magic"></i> Generate Insight
+                </button>
+            </div>
+            
+            <div class="bg-white/10 p-6 rounded-xl border border-white/20 min-h-[100px] flex items-center shadow-inner relative">
+                <div id="ai-loading" class="hidden w-full space-y-3">
+                    <div class="h-4 bg-white/20 rounded animate-pulse w-3/4"></div>
+                    <div class="h-4 bg-white/20 rounded animate-pulse w-1/2"></div>
+                </div>
+                <p id="ai-insight-text" class="text-lg font-medium leading-relaxed text-indigo-50">
+                    Click "Generate Insight" to ask the Llama-3 AI for a personalized financial and weather analysis based on your current data view.
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer same as before -->
+    <footer class="mt-12 mb-8 max-w-6xl mx-auto bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 border border-slate-100 dark:border-slate-700 text-center relative overflow-hidden transition-colors duration-300">
+        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6 divide-y md:divide-y-0 md:divide-x divide-slate-100 dark:divide-slate-700">
+            <div class="pt-4 md:pt-0 flex flex-col justify-center">
+                <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1 flex items-center justify-center gap-1"><i class="bi bi-code-slash"></i> Developer</p>
+                <p class="font-bold text-slate-800 dark:text-slate-200 text-lg">Arda Hacifevzioglu</p>
+            </div>
+            <div class="pt-4 md:pt-0 flex flex-col justify-center">
+                <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1 flex items-center justify-center gap-1"><i class="bi bi-journal-code"></i> Course</p>
+                <p class="font-bold text-indigo-600 dark:text-indigo-400 text-lg">Advance Software Development</p>
+            </div>
+            <div class="pt-4 md:pt-0 flex flex-col justify-center">
+                <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1 flex items-center justify-center gap-1"><i class="bi bi-person-workspace"></i> Professor</p>
+                <p class="font-bold text-slate-800 dark:text-slate-200 text-lg">Jordi CABOT SAGRERA</p>
+            </div>
+        </div>
+        <div class="relative z-10 mt-6 pt-5 border-t border-slate-100 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-400 font-medium flex flex-col sm:flex-row justify-center items-center gap-2">
+            <span class="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-3 py-1 rounded-full text-xs font-bold tracking-wide">University of Luxembourg</span>
+            <span class="hidden sm:inline-block text-slate-300 dark:text-slate-600">•</span>
+            <span>Course Project</span><span class="hidden sm:inline-block text-slate-300 dark:text-slate-600">•</span><span>2026</span>
+        </div>
+    </footer>
+
+    <!-- Search History Modal -->
+    <div id="history-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center backdrop-blur-sm transition-opacity">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 w-11/12 max-w-md relative">
+            <button id="close-history-btn" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white transition">
+                <i class="bi bi-x-circle-fill text-2xl"></i>
+            </button>
+            <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+                <i class="bi bi-database text-indigo-500"></i> SQL Search History
+            </h3>
+            <div id="history-list" class="space-y-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                <div class="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg text-sm text-slate-500 text-center">No history yet.</div>
+            </div>
+            <p class="text-xs text-slate-400 mt-4 text-center">Powered by browser-based SQLite (sql.js)</p>
+        </div>
+    </div>
+
+    <!-- SQL.js for Browser-based Database -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
